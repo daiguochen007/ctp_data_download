@@ -48,9 +48,16 @@ void CTraderSpi::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, CTho
 	//printf("  前置编号:[%d]\n", pRspUserLogin->FrontID);//
 	//printf("  会话编号:[%d]\n", pRspUserLogin->SessionID);//
 	//printf("  最大报单编号:[%s]\n", pRspUserLogin->MaxOrderRef);
-	g_nOrdLocalID = atoi(pRspUserLogin->MaxOrderRef);
-	StartMenu(); //连接成功后自动进入菜单
+	g_nOrdLocalID = atoi(pRspUserLogin->MaxOrderRef); 
+	
+	//连接成功后自动
+	trading_date = get_tradingdate_string();
+
+	StartMenu();
 }
+
+
+
 
 void CTraderSpi::OnRspUserPasswordUpdate(CThostFtdcUserPasswordUpdateField *pUserPasswordUpdate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
@@ -314,7 +321,7 @@ void CTraderSpi::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument, CTho
 
 	//文件名加上日期
 	char filePath[100] = { '\0' };
-	sprintf(filePath, "data\\contract_table_%s.csv", date_string.c_str());
+	sprintf(filePath, "%s\\contract_table_%s.csv",trading_date ,trading_date);
 
 	ofstream outFile;
 	outFile.open(filePath, ios::app); // 文件追加写入   
@@ -329,6 +336,10 @@ void CTraderSpi::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument, CTho
 
 	cout <<pInstrument->InstrumentID<<endl;
 	instru_vec.push_back(pInstrument->InstrumentID);
+
+	//if (bIsLast){
+	//	//行情线程解锁
+	//}
 	return;
 }
 

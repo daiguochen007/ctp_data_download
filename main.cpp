@@ -47,14 +47,24 @@ void getid(TThostFtdcBrokerIDType &g_BrokerID, TThostFtdcUserIDType	&g_UserID, T
 	return;
 }
 
-void get_date_string(string &date_string){
-	time_t local_t = time(NULL);
-	struct tm *local_t_ptr;
-	char date_char[16];
-	local_t_ptr = localtime(&local_t);
-	strftime(date_char, sizeof(date_char), "%Y%m%d", local_t_ptr);
-	date_string = date_char;
-}
+////得到交易日期
+//void get_date_string(string &date_string){
+//	stringstream date_oss;
+//
+//	time_t local_t = time(NULL);
+//	struct tm *local_t_ptr;
+//	local_t_ptr = localtime(&local_t);
+//	//判断
+//	date_oss << local_t_ptr->tm_year + 1900;
+//	date_oss.width(2);
+//	date_oss.fill('0');
+//	date_oss << local_t_ptr->tm_mon + 1;
+//	date_oss.width(2);
+//	date_oss.fill('0');
+//	date_oss << local_t_ptr->tm_mday;
+//
+//	date_string = date_oss.str();
+//}
 
 int main(int argc, char* argv[])
 {
@@ -68,7 +78,7 @@ int main(int argc, char* argv[])
 	strcpy(g_frontaddr_trade, "tcp://180.168.146.187:10000");
 
 	getid(g_BrokerID, g_UserID, g_Password);
-	get_date_string(date_string);
+	//get_date_string(date_string);
 
 	// ----------------------------------------------交易
 	// 产生一个CThostFtdcTraderApi实例

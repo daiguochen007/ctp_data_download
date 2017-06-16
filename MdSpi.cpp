@@ -56,7 +56,7 @@ void CSimpleHandler::OnRspSubMarketData(CThostFtdcSpecificInstrumentField *pSpec
 		//不同的合约单独存储 
 		//文件名加上日期
 		char filePath[100] = { '\0' };
-		sprintf(filePath, "data\\%s_%s.csv", pSpecificInstrument->InstrumentID,date_string.c_str());
+		sprintf(filePath, "%s\\%s_%s.csv", trading_date, pSpecificInstrument->InstrumentID, trading_date);
 
 		//如果文件不存在,create
 		fstream _file;
@@ -101,8 +101,7 @@ void CSimpleHandler::OnRtnDepthMarketData(CThostFtdcDepthMarketDataField*pDepthM
 
 	//文件名加上日期
 	char filePath[100] = { '\0' };
-	sprintf(filePath, "data\\%s_%s.csv", pDepthMarketData->InstrumentID,date_string.c_str());
-
+	sprintf(filePath, "%s\\%s_%s.csv", trading_date, pDepthMarketData->InstrumentID, trading_date);
 	ofstream outFile;
 	outFile.open(filePath, ios::app); // 文件追加写入   
 	outFile << pDepthMarketData->InstrumentID << ","

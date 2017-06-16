@@ -23,7 +23,7 @@ char g_frontaddr_trade[BUFLEN];
 int g_nOrdLocalID = 0;
 
 //4. 日期信息
-string date_string;
+const char* trading_date;
 
 //5. 所有合约的list 
 vector<string>instru_vec;
@@ -40,50 +40,72 @@ int WINAPI MenuFunc(LPVOID pParam)
 void * MenuFunc(void *pParam)
 #endif
 {
-	int g_choose;
-	while (true){
-		cout << "#------------目录-----------#" << endl;
-		cout << "1. 查找全市场合约" << endl;
-		cout << "2. 输出全市场合约" << endl;
-		cout << "3. 订阅全市场合约" << endl;
-		cout << "4. 退出 "<<endl;
-		cout << "#---       特殊需求      ---#" << endl;
-		cout << "5. 手动订阅合约" << endl;
-		cout << "#---------------------------#" << endl;
-		cin.clear();
-		cin >> g_choose;
-		cout << "您选择的是：[" << g_choose << "]" << endl;
-		switch (g_choose)
-		{
-		case 1:
-			QryInstruments_Trading();
-			break;
-		case 2:
-			for (int i = 0; i < instru_vec.size(); i++){
-				cout << instru_vec[i]<<" ";
-			}
-			break;
-		case 3:
-			SubscribeMarketData_all();
-			break;
-		case 4:
-			exit(0);
-		case 5:
-			user_SubcribeMarketData_byhand();
-			break;
-		default:
-			cout << "Input Error" << endl;
-			int c;
-			while ((c = getchar()) != '\n' && c != EOF);
-			break;
-		}
-		Sleep(200);
-		g_choose = -1;
-		system("pause");
-	}
+	//自动拿数据
+	check_folder();
+	QryInstruments_Trading();
+	//待解决 需要自动判断代码传输结束
+	Sleep(6000);
+	SubscribeMarketData_all();
+
+	////菜单面板
+	//int g_choose;
+	//while (true){
+	//	cout << "#------------目录-----------#" << endl;
+	//	cout << "1. 一键下载" << endl;
+	//	cout << "#---       特殊需求      ---#" << endl;
+	//	cout << "8. 创建当前交易日期的文件夹" << endl;
+	//	cout << "2. 查找全市场合约" << endl;
+	//	cout << "3. 输出全市场合约" << endl;
+	//	cout << "4. 订阅全市场合约" << endl;
+	//	cout << "5. 退出 "<<endl;
+	//	cout << "6. 手动订阅合约" << endl;
+	//	cout << "7. 查询当前交易日期" << endl;
+	//	cout << "#---------------------------#" << endl;
+	//	cin.clear();
+	//	cin >> g_choose;
+	//	cout << "您选择的是：[" << g_choose << "]" << endl;
+	//	switch (g_choose)
+	//	{
+	//	case 1:
+	//		check_folder();
+	//		QryInstruments_Trading();
+	//		Sleep(6000);
+	//		SubscribeMarketData_all();
+	//		break;
+	//	case 2:
+	//		QryInstruments_Trading();
+	//		break;
+	//	case 3:
+	//		for (int i = 0; i < instru_vec.size(); i++){
+	//			cout << instru_vec[i]<<" ";
+	//		}
+	//		break;
+	//	case 4:
+	//		SubscribeMarketData_all();
+	//		break;
+	//	case 5:
+	//		exit(0);
+	//	case 6:
+	//		user_SubcribeMarketData_byhand();
+	//		break;
+	//	case 7:
+	//		cout<<trading_date<<endl;
+	//		break;
+	//	case 8:
+	//		check_folder();
+	//		break;
+	//	default:
+	//		cout << "Input Error" << endl;
+	//		int c;
+	//		while ((c = getchar()) != '\n' && c != EOF);
+	//		break;
+	//	}
+	//	Sleep(200);
+	//	g_choose = -1;
+	//	system("pause");
+	//}
 	return 0;
 }
-
 
 void user_SubcribeMarketData_byhand(){
 	int ins_num=0;
@@ -132,8 +154,8 @@ void SubscribeMarketData_all(){
 		delete[] ins_vec_c[i];
 	}
 	delete[] ins_vec_c;
+	return;
 }
-
 
 void QryInstruments_Trading(){
 	if (g_puserapi == NULL)
@@ -142,7 +164,7 @@ void QryInstruments_Trading(){
 		return;
 	}
 	char filePath[100] = { '\0' };
-	sprintf(filePath, "data\\contract_table_%s.csv", date_string.c_str());
+	sprintf(filePath, "%s\\contract_table_%s.csv",trading_date ,trading_date);
 
 	ofstream outFile;
 	outFile.open(filePath, ios::out); // 新开文件
@@ -166,6 +188,27 @@ void QryInstruments_Trading(){
 	return;
 }
 
+const char* get_tradingdate_string(){
+	if (g_puserapi == NULL)
+	{
+		cout << "StartQry  USERAPI未创建" << endl;
+		return "";
+	}
+#ifdef WIN32
+	Sleep(200);
+#else
+	usleep(200);
+#endif
+	return g_puserapi->GetTradingDay();
+}
+
+void check_folder(){
+	if (_access(trading_date, 0) != 0){
+		cout << "文件夹不存在，将被创建..." << endl;
+		_mkdir(trading_date);
+	}
+	else{ cout << "文件夹已经存在！" << endl; }
+}
 
 bool StartMenu()
 {
@@ -181,9 +224,11 @@ bool StartMenu()
 	}
 	SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
 	ResumeThread(hThread);
-#else
-	ret = (::pthread_create(&hThread, NULL, &OrderFunc, NULL) == 0);
 
+
+#else 
+	ret = (::pthread_create(&hThread, NULL, &OrderFunc, NULL) == 0);
 #endif
 	return ret;
 }
+ 

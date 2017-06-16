@@ -29,6 +29,10 @@
 #include <tchar.h>
 #include <iostream>
 #include <fstream>
+#include <sstream>
+#include <io.h>
+#include <direct.h>
+
 #include "ThostFtdcMdApi.h"
 #include "ThostFtdcUserApiStruct.h"
 #include "ThostFtdcTraderApi.h"
@@ -56,7 +60,8 @@ extern char g_frontaddr_data[BUFLEN];
 //extern HANDLE g_hEvent;
 extern int g_nOrdLocalID;
 
-extern string date_string;
+extern const char* trading_date;
+
 extern vector<string>instru_vec;
 
 //函数
@@ -64,5 +69,9 @@ void user_SubcribeMarketData_byhand();
 void SubscribeMarketData_all();
 void QryInstruments_Trading();
 bool StartMenu();
+void check_folder();
+
+//获得交易日
+const char* get_tradingdate_string();
 
 #endif
