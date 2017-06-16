@@ -19,9 +19,10 @@ void usage(char* pName)
 }
 
 void getid(TThostFtdcBrokerIDType &g_BrokerID, TThostFtdcUserIDType	&g_UserID, TThostFtdcPasswordType &g_Password){
-	ifstream userfile("C://NYU poly//ctp_futures//ctp_trade_sim//ctptest-sim//user.txt");
+	ifstream userfile("user.txt");
 	if (!userfile){
-		cout << "User file not exit";
+		cout << "User file not exist!"<<endl;
+		system("pause");
 		exit(1);
 	}
 	char buffer[128];
@@ -47,30 +48,9 @@ void getid(TThostFtdcBrokerIDType &g_BrokerID, TThostFtdcUserIDType	&g_UserID, T
 	return;
 }
 
-////得到交易日期
-//void get_date_string(string &date_string){
-//	stringstream date_oss;
-//
-//	time_t local_t = time(NULL);
-//	struct tm *local_t_ptr;
-//	local_t_ptr = localtime(&local_t);
-//	//判断
-//	date_oss << local_t_ptr->tm_year + 1900;
-//	date_oss.width(2);
-//	date_oss.fill('0');
-//	date_oss << local_t_ptr->tm_mon + 1;
-//	date_oss.width(2);
-//	date_oss.fill('0');
-//	date_oss << local_t_ptr->tm_mday;
-//
-//	date_string = date_oss.str();
-//}
-
 int main(int argc, char* argv[])
 {
 	usage(argv[0]);
-
-	
 
 	memset(g_frontaddr_data, 0, BUFLEN);
 	memset(g_frontaddr_trade, 0, BUFLEN);
