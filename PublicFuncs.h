@@ -67,7 +67,7 @@ extern vector<string>instru_vec;
 //º¯Êý
 void user_SubcribeMarketData_byhand();
 void SubscribeMarketData_all();
-void QryInstruments_Trading();
+void QryInstruments_subscribing();
 bool StartMenu();
 void check_folder();
 

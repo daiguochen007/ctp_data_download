@@ -42,38 +42,32 @@ void * MenuFunc(void *pParam)
 {
 	//自动拿数据
 	check_folder();
-	QryInstruments_Trading();
-	//待解决 需要自动判断代码传输结束
-	Sleep(6000);
-	SubscribeMarketData_all();
+	QryInstruments_subscribing();
 
 	////菜单面板
 	//int g_choose;
 	//while (true){
 	//	cout << "#------------目录-----------#" << endl;
-	//	cout << "1. 一键下载" << endl;
+	//	cout << "0. 一键下载" << endl;
 	//	cout << "#---       特殊需求      ---#" << endl;
-	//	cout << "8. 创建当前交易日期的文件夹" << endl;
-	//	cout << "2. 查找全市场合约" << endl;
+	//	cout << "1. 创建当前交易日期的文件夹" << endl;
 	//	cout << "3. 输出全市场合约" << endl;
 	//	cout << "4. 订阅全市场合约" << endl;
 	//	cout << "5. 退出 "<<endl;
 	//	cout << "6. 手动订阅合约" << endl;
 	//	cout << "7. 查询当前交易日期" << endl;
+	//	cout << "9. Test" << endl;
 	//	cout << "#---------------------------#" << endl;
 	//	cin.clear();
 	//	cin >> g_choose;
 	//	cout << "您选择的是：[" << g_choose << "]" << endl;
 	//	switch (g_choose)
 	//	{
-	//	case 1:
+	//	case 0:
 	//		check_folder();
-	//		QryInstruments_Trading();
-	//		Sleep(6000);
-	//		SubscribeMarketData_all();
+	//		QryInstruments_subscribing()
 	//		break;
 	//	case 2:
-	//		QryInstruments_Trading();
 	//		break;
 	//	case 3:
 	//		for (int i = 0; i < instru_vec.size(); i++){
@@ -91,8 +85,10 @@ void * MenuFunc(void *pParam)
 	//	case 7:
 	//		cout<<trading_date<<endl;
 	//		break;
-	//	case 8:
+	//	case 1:
 	//		check_folder();
+	//		break;
+	//	case 9:
 	//		break;
 	//	default:
 	//		cout << "Input Error" << endl;
@@ -157,29 +153,59 @@ void SubscribeMarketData_all(){
 	return;
 }
 
-void QryInstruments_Trading(){
-	if (g_puserapi == NULL)
+void QryInstruments_subscribing(){
+	if (g_puserapi == NULL || g_pmduserapi == NULL)
 	{
-		cout<<"StartQryInvestorAccount  USERAPI未创建"<<endl;
+		cout<<"行情或交易USERAPI未创建"<<endl;
 		return;
 	}
+
+	//文件名
 	char filePath[100] = { '\0' };
 	sprintf(filePath, "%s\\contract_table_%s.csv",trading_date ,trading_date);
 
-	ofstream outFile;
-	outFile.open(filePath, ios::out); // 新开文件
-	outFile << "交易所代码" << ","
-		<< "合约代码" << ","
-		<< "数量乘数" << ","
-		<< "最小变动价位" << ","
-		<< "合约到期日"
-		<< endl;
-	outFile.close();
+	//如果文件不存在,create并下载合约名称,如果存在则读取(更快)
+	fstream _file;
+	_file.open(filePath, ios::in);
+	if (!_file)
+	{
+		ofstream outFile;
+		outFile.open(filePath, ios::out); // 新开文件
+		outFile << "交易所代码" << ","
+			<< "合约代码" << ","
+			<< "数量乘数" << ","
+			<< "最小变动价位" << ","
+			<< "合约到期日"
+			<< endl;
+		outFile.close();
 
-	CThostFtdcQryInstrumentField QryInstrument;
-	memset(&QryInstrument, 0, sizeof(CThostFtdcQryInstrumentField));
-	g_puserapi->ReqQryInstrument(&QryInstrument, g_nOrdLocalID++);
-	cout<<"等待全市场合约代码查询结果..."<<endl;
+		CThostFtdcQryInstrumentField QryInstrument;
+		memset(&QryInstrument, 0, sizeof(CThostFtdcQryInstrumentField));
+		g_puserapi->ReqQryInstrument(&QryInstrument, g_nOrdLocalID++);
+		cout << "等待全市场合约代码查询结果..." << endl;
+		//等待回调函数完成
+		//订阅在回调函数内
+	}
+	else{
+		//文件存在则打开读取
+		instru_vec.clear();
+		string line,ticker;
+		ifstream inFile(filePath);
+		getline(inFile, line); //去掉header
+		while (getline(inFile,line)){
+			int i = 1;
+			istringstream is(line);
+			while (getline(is, ticker, ',')){
+				if (i == 2){
+					cout << ticker << endl;
+					instru_vec.push_back(ticker);
+				}
+				i++;
+			}
+		}
+		//订阅
+		SubscribeMarketData_all();
+	}
 #ifdef WIN32
 	Sleep(200);
 #else

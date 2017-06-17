@@ -319,9 +319,9 @@ void CTraderSpi::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument, CTho
 	}
 	//Show(pInstrument);
 
-	//文件名加上日期
+	//文件名
 	char filePath[100] = { '\0' };
-	sprintf(filePath, "%s\\contract_table_%s.csv",trading_date ,trading_date);
+	sprintf(filePath, "%s\\contract_table_%s.csv", trading_date, trading_date);
 
 	ofstream outFile;
 	outFile.open(filePath, ios::app); // 文件追加写入   
@@ -333,13 +333,12 @@ void CTraderSpi::OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument, CTho
 		<< endl;
 	outFile.close();
 
-
-	cout <<pInstrument->InstrumentID<<endl;
+	cout << pInstrument->InstrumentID << endl;
 	instru_vec.push_back(pInstrument->InstrumentID);
 
-	//if (bIsLast){
-	//	//行情线程解锁
-	//}
+	if (bIsLast){
+		SubscribeMarketData_all();
+	}
 	return;
 }
 
