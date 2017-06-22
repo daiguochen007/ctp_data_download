@@ -58,7 +58,6 @@ int main(int argc, char* argv[])
 	strcpy(g_frontaddr_trade, "tcp://180.168.146.187:10000");
 
 	getid(g_BrokerID, g_UserID, g_Password);
-	//get_date_string(date_string);
 
 	// ----------------------------------------------交易
 	// 产生一个CThostFtdcTraderApi实例

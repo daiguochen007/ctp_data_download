@@ -63,15 +63,24 @@ extern int g_nOrdLocalID;
 extern const char* trading_date;
 
 extern vector<string>instru_vec;
+//extern NoRsp_time;
 
 //函数
 void user_SubcribeMarketData_byhand();
 void SubscribeMarketData_all();
 void QryInstruments_subscribing();
-bool StartMenu();
-void check_folder();
+bool check_folder();
+//登录函数
+void Trader_Login();
+void Data_Login();
+//自己加的黑科技，退出登录
+void Trader_Logout();
+
 
 //获得交易日
 const char* get_tradingdate_string();
 
+//带线程函数
+bool start_from_trader();
+bool start_from_datauser();
 #endif

@@ -35,11 +35,12 @@ CThostFtdcTraderApi * g_puserapi = NULL;
 /*---------------全局函数区---------------*/
 
 #ifdef WIN32
-int WINAPI MenuFunc(LPVOID pParam)
+int WINAPI SFT_Func(LPVOID pParam)
 #else
-void * MenuFunc(void *pParam)
+void * SFT_Func(void *pParam)
 #endif
 {
+	cout << "start from trader api"<<endl;
 	//自动拿数据
 	check_folder();
 	QryInstruments_subscribing();
@@ -65,7 +66,7 @@ void * MenuFunc(void *pParam)
 	//	{
 	//	case 0:
 	//		check_folder();
-	//		QryInstruments_subscribing()
+	//		QryInstruments_subscribing();
 	//		break;
 	//	case 2:
 	//		break;
@@ -89,6 +90,8 @@ void * MenuFunc(void *pParam)
 	//		check_folder();
 	//		break;
 	//	case 9:
+	//		Trader_Logout();
+	//      Trader_Login();
 	//		break;
 	//	default:
 	//		cout << "Input Error" << endl;
@@ -102,6 +105,46 @@ void * MenuFunc(void *pParam)
 	//}
 	return 0;
 }
+
+//登录
+void Trader_Login(){
+	CThostFtdcReqUserLoginField reqUserLogin;
+	// get BrokerID
+	strcpy(reqUserLogin.BrokerID, g_BrokerID);
+	// get userid
+	strcpy(reqUserLogin.UserID, g_UserID);
+	// get password
+	strcpy(reqUserLogin.Password, g_Password);
+	cout << "交易服务器请求登录中..." << endl;
+	// 发出登陆请求
+	g_puserapi->ReqUserLogin(&reqUserLogin, 0);
+
+}
+void Data_Login(){
+	CThostFtdcReqUserLoginField reqUserLogin;
+	// get BrokerID
+	strcpy(reqUserLogin.BrokerID, g_BrokerID);
+	// get userid
+	strcpy(reqUserLogin.UserID, g_UserID);
+	// get password
+	strcpy(reqUserLogin.Password, g_Password);
+	cout << "行情服务器请求登录中..." << endl;
+	// 发出登陆请求
+	g_pmduserapi->ReqUserLogin(&reqUserLogin, 0);
+}
+
+//自己加的黑科技，trader退出
+void Trader_Logout(){
+	//需要初始化！
+	//先退出
+	CThostFtdcUserLogoutField reqUserLogout;
+	// get BrokerID
+	strcpy(reqUserLogout.BrokerID, g_BrokerID);
+	// get userid
+	strcpy(reqUserLogout.UserID, g_UserID);
+	g_puserapi->ReqUserLogout(&reqUserLogout, 0);
+}
+
 
 void user_SubcribeMarketData_byhand(){
 	int ins_num=0;
@@ -157,6 +200,7 @@ void QryInstruments_subscribing(){
 	if (g_puserapi == NULL || g_pmduserapi == NULL)
 	{
 		cout<<"行情或交易USERAPI未创建"<<endl;
+		//重新登录
 		return;
 	}
 
@@ -197,12 +241,13 @@ void QryInstruments_subscribing(){
 			istringstream is(line);
 			while (getline(is, ticker, ',')){
 				if (i == 2){
-					cout << ticker << endl;
+					//cout << ticker << endl;
 					instru_vec.push_back(ticker);
 				}
 				i++;
 			}
 		}
+		cout << "本地读取合约表成功" << endl;
 		//订阅
 		SubscribeMarketData_all();
 	}
@@ -228,22 +273,26 @@ const char* get_tradingdate_string(){
 	return g_puserapi->GetTradingDay();
 }
 
-void check_folder(){
+bool check_folder(){
 	if (_access(trading_date, 0) != 0){
 		cout << "文件夹不存在，将被创建..." << endl;
 		_mkdir(trading_date);
+		return false;
 	}
-	else{ cout << "文件夹已经存在！" << endl; }
+	else{ 
+		cout << "文件夹已经存在！" << endl; 
+		return true;
+	}
 }
 
-bool StartMenu()
+bool start_from_trader()
 {
 	//int dwIDThread;
 	unsigned long dwIDThread;
 	THREAD_HANDLE hThread;	/**< 线程句柄 */
 	bool ret = true;
 #ifdef WIN32
-	hThread = ::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)MenuFunc, NULL, 0, &dwIDThread);
+	hThread = ::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SFT_Func, NULL, 0, &dwIDThread);
 	if (hThread == NULL)
 	{
 		ret = false;
@@ -251,10 +300,33 @@ bool StartMenu()
 	SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
 	ResumeThread(hThread);
 
-
 #else 
 	ret = (::pthread_create(&hThread, NULL, &OrderFunc, NULL) == 0);
 #endif
 	return ret;
 }
- 
+
+
+int WINAPI SFDU_Func(LPVOID pParam)
+{
+	cout << "start from datauser api" << endl;
+	////自动拿数据
+	SubscribeMarketData_all();
+	return 0;
+}
+
+bool start_from_datauser()
+{
+	//int dwIDThread;
+	unsigned long dwIDThread;
+	THREAD_HANDLE hThread;	/**< 线程句柄 */
+	bool ret = true;
+	hThread = ::CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SFDU_Func, NULL, 0, &dwIDThread);
+	if (hThread == NULL)
+	{
+		ret = false;
+	}
+	SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
+	ResumeThread(hThread);
+	return ret;
+}

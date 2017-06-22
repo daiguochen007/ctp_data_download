@@ -8,16 +8,8 @@ CTraderSpi::~CTraderSpi(){};
 
 void CTraderSpi::OnFrontConnected()
 {
-	CThostFtdcReqUserLoginField reqUserLogin;
-	// get BrokerID
-	strcpy(reqUserLogin.BrokerID, g_BrokerID);
-	// get userid
-	strcpy(reqUserLogin.UserID, g_UserID);
-	// get password
-	strcpy(reqUserLogin.Password, g_Password);
-	// 发出登陆请求
-	m_pUserApi->ReqUserLogin(&reqUserLogin, 0);
-	cout<<"交易服务器请求登录中..."<<endl;
+	//连上了就登陆
+	Trader_Login();
 #ifdef WIN32
 	Sleep(1000);
 #else
@@ -28,19 +20,26 @@ void CTraderSpi::OnFrontConnected()
 void CTraderSpi::OnFrontDisconnected(int nReason)
 {
 	// 当发生这个情况后，API会自动重新连接，客户端可不做处理
-	printf("OnFrontDisconnected.(交易前置连接断开)\n");
+	cout << "交易连接断开，正在重连..."<<endl;
 }
 
 void CTraderSpi::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-	//printf("OnRspUserLogin:\n");
-	//printf("ErrorCode=[%d], ErrorMsg=[%s]\n", pRspInfo->ErrorID, pRspInfo->ErrorMsg);
-	//printf("RequestID=[%d], Chain=[%d]\n", nRequestID, bIsLast);
 	if (pRspInfo->ErrorID != 0) {
 		// 端登失败，客户端需进行错误处理
+		// 目前会出现：ctp尚未初始化 value 7
 		printf("-----------------------------\n");
-		printf("登录失败...错误原因：%s\n", pRspInfo->ErrorMsg);
+		printf("交易登录失败...错误原因：%s\n", pRspInfo->ErrorMsg);
 		printf("-----------------------------\n");
+
+		if (pRspInfo->ErrorID == 7){
+			//退出去重新登
+			//清理内存
+			instru_vec.clear();
+			cout << "将退出交易并重新登录..." << endl;
+			Trader_Logout();
+			Trader_Login();
+		}
 		return;
 	}
 
@@ -52,12 +51,10 @@ void CTraderSpi::OnRspUserLogin(CThostFtdcRspUserLoginField* pRspUserLogin, CTho
 	
 	//连接成功后自动
 	trading_date = get_tradingdate_string();
-
-	StartMenu();
+	if (instru_vec.size() == 0){
+		start_from_trader();
+	}
 }
-
-
-
 
 void CTraderSpi::OnRspUserPasswordUpdate(CThostFtdcUserPasswordUpdateField *pUserPasswordUpdate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {

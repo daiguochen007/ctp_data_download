@@ -8,16 +8,8 @@ CSimpleHandler::~CSimpleHandler() {}
 // 当客户端与交易托管系统建立起通信连接，客户端需要进行登录
 void CSimpleHandler::OnFrontConnected()
 {
-	CThostFtdcReqUserLoginField reqUserLogin;
-	// get BrokerID
-	strcpy(reqUserLogin.BrokerID, g_BrokerID);
-	// get userid
-	strcpy(reqUserLogin.UserID, g_UserID);
-	// get password
-	strcpy(reqUserLogin.Password, g_Password);
-	// 发出登陆请求
-	m_pUserApi->ReqUserLogin(&reqUserLogin, 0);
-	cout<<"行情服务器请求登录中..."<<endl;
+	//连上了就登陆
+	Data_Login();
 #ifdef WIN32
 	Sleep(1000);
 #else
@@ -29,7 +21,7 @@ void CSimpleHandler::OnFrontConnected()
 void CSimpleHandler::OnFrontDisconnected(int nReason)
 {
 	// 当发生这个情况后，API会自动重新连接，客户端可不做处理
-	cout<<"通信连接断开，正在重连..."<<endl;
+	cout<<"行情连接断开，正在重连..."<<endl;
 }
 
 // 当客户端发出登录请求之后，该方法会被调用，通知客户端登录是否成功
@@ -37,13 +29,20 @@ void CSimpleHandler::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin, 
 {
 	if (pRspInfo->ErrorID != 0) {
 		// 端登失败，客户端需进行错误处理
-		printf("Failed to login, errorcode=%d errormsg=%s requestid=%dchain = %d", pRspInfo->ErrorID, pRspInfo->ErrorMsg, nRequestID, bIsLast);
-		exit(-1);
+		printf("-----------------------------\n");
+		printf("行情登录失败...错误原因：%s\n", pRspInfo->ErrorMsg);
+		printf("-----------------------------\n");
+		return;
 	}
 	// 端登成功
 	cout<<"行情服务器登陆成功！！！"<<endl;
 	////////---------------------------------------------------------////////
 	//登录成功后开始订阅行情
+	//Sleep(1000);
+	//Trader_Logout();
+	if (instru_vec.size() != 0){
+		start_from_datauser();
+	}
 }
 
 //订阅行情应答
